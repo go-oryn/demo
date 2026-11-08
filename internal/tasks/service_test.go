@@ -14,8 +14,8 @@ import (
 	"github.com/go-oryn/oryn/core/otel/oteltest/metrictest"
 	"github.com/go-oryn/oryn/core/otel/oteltest/spantest"
 
-	"github.com/go-oryn/demo/demotest"
-	"github.com/go-oryn/demo/tasks"
+	"github.com/go-oryn/demo/internal/demotest"
+	"github.com/go-oryn/demo/internal/tasks"
 )
 
 func TestService(t *testing.T) {
@@ -96,5 +96,21 @@ func TestService(t *testing.T) {
 		require.ErrorIs(t, err, tasks.ErrNotFound)
 
 		require.ErrorIs(t, service.Delete(t.Context(), "missing"), tasks.ErrNotFound)
+	})
+
+	t.Run("store failure", func(t *testing.T) {
+		t.Parallel()
+
+		var service *tasks.Service
+
+		app := demotest.Start(t, demotest.ReplaceStore(demotest.FailingStore{}), fx.Populate(&service))
+
+		_, err := service.Create(t.Context(), "test_title")
+		require.ErrorIs(t, err, demotest.ErrStore)
+
+		// An unexpected error: the span fails, and nothing is counted or logged.
+		spantest.HasSpan(t, app.Spans, spantest.WithName("tasks.create"), spantest.WithStatus(codes.Error))
+		logtest.HasNoRecord(t, app.Logs, logtest.WithBody("task created"))
+		assert.Equal(t, int64(0), metrictest.Int64Sum(t, app.Metrics, "tasks.created"))
 	})
 }

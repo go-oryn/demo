@@ -1,5 +1,5 @@
-// Package tasks is the tasks domain: a [Service] holding the business rules, on a [Repository]
-// storing the tasks in the database. The HTTP, gRPC and MCP APIs all use the same [Service].
+// Package tasks is the tasks domain: a [Service] holding the business rules, on a [Store],
+// implemented by the [Repository] on the database. The HTTP, gRPC and MCP APIs all use the same [Service].
 package tasks
 
 import (

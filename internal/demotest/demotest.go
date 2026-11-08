@@ -3,6 +3,8 @@
 package demotest
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -23,6 +25,7 @@ import (
 	"github.com/go-oryn/oryn/sql"
 
 	"github.com/go-oryn/demo"
+	"github.com/go-oryn/demo/internal/tasks"
 	tasksv1 "github.com/go-oryn/demo/proto/tasks/v1"
 )
 
@@ -80,4 +83,24 @@ func (a *App) HTTP(method string, target string, body string) *httptest.Response
 	a.HTTPServer.Handler.ServeHTTP(recorder, request)
 
 	return recorder
+}
+
+// ErrStore is the error of the [FailingStore].
+var ErrStore = errors.New("test_store_error")
+
+// FailingStore is a [tasks.Store] failing every call with [ErrStore]. Replace the database with it,
+// to test how the service and the APIs handle unexpected errors:
+//
+//	app := demotest.Start(t, demotest.ReplaceStore(demotest.FailingStore{}))
+type FailingStore struct{}
+
+func (FailingStore) List(context.Context) ([]tasks.Task, error)      { return nil, ErrStore }
+func (FailingStore) Get(context.Context, string) (tasks.Task, error) { return tasks.Task{}, ErrStore }
+func (FailingStore) Insert(context.Context, tasks.Task) error        { return ErrStore }
+func (FailingStore) Complete(context.Context, string) error          { return ErrStore }
+func (FailingStore) Delete(context.Context, string) error            { return ErrStore }
+
+// ReplaceStore replaces the [tasks.Store] of the application, with fx.Replace.
+func ReplaceStore(store tasks.Store) fx.Option {
+	return fx.Replace(fx.Annotate(store, fx.As(new(tasks.Store))))
 }

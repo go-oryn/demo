@@ -30,12 +30,12 @@ claude mcp add --transport http oryn-demo http://localhost:8082/mcp
 |---|---|
 | `app.go` | The application, shared by the commands and the tests |
 | `cmd/serve`, `cmd/migrate` | The commands |
-| `tasks/` | The domain module: `Service` (rules, spans, metrics, logs) and `Repository` (SQL) |
-| `httpapi/`, `grpcapi/`, `mcpapi/` | The three APIs on the `tasks.Service` |
+| `internal/tasks/` | The domain module: `Service` (rules, spans, metrics, logs) on a `Store`, the `Repository` (SQL) |
+| `internal/http/`, `internal/grpc/`, `internal/mcp/` | The three APIs on the `tasks.Service` |
 | `proto/` | The gRPC API definition and its generated code (`go generate ./proto`) |
 | `migrations/` | SQL migrations, embedded |
 | `configs/` | Configuration, per `APP_ENV` |
-| `demotest/` | Starts the application in tests, with in-memory HTTP, gRPC and MCP clients |
+| `internal/demotest/` | Starts the application in tests, with in-memory HTTP, gRPC and MCP clients, and `fx.Replace` helpers |
 
 ## Telemetry
 

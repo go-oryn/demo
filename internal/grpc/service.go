@@ -1,4 +1,4 @@
-// Package grpcapi is the gRPC API of the tasks: the TasksService of proto/tasks/v1/tasks.proto,
+// Package grpcapi (internal/grpc) is the gRPC API of the tasks: the TasksService of proto/tasks/v1/tasks.proto,
 // on the [tasks.Service].
 package grpcapi
 
@@ -13,8 +13,8 @@ import (
 
 	"github.com/go-oryn/oryn/grpcserver"
 
+	"github.com/go-oryn/demo/internal/tasks"
 	tasksv1 "github.com/go-oryn/demo/proto/tasks/v1"
-	"github.com/go-oryn/demo/tasks"
 )
 
 // Module registers the TasksService on the gRPC server.

@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/go-oryn/demo/tasks"
+	"github.com/go-oryn/demo/internal/tasks"
 )
 
 // NewListHandler returns the GET /api/tasks handler.

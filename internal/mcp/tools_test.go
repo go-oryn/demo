@@ -2,6 +2,7 @@ package mcpapi_test
 
 import (
 	"encoding/json"
+	"log/slog"
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -9,11 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/go-oryn/oryn/core/otel/oteltest/logtest"
 	"github.com/go-oryn/oryn/core/otel/oteltest/spantest"
 
-	"github.com/go-oryn/demo/demotest"
-	"github.com/go-oryn/demo/mcpapi"
-	"github.com/go-oryn/demo/tasks"
+	"github.com/go-oryn/demo/internal/demotest"
+	mcpapi "github.com/go-oryn/demo/internal/mcp"
+	"github.com/go-oryn/demo/internal/tasks"
 )
 
 // call calls a tool, and decodes its structured output into out.
@@ -86,5 +88,20 @@ func TestTools(t *testing.T) {
 			spantest.WithName("tools/call complete_task"),
 			spantest.WithAttributeValue(attribute.String("error.type", "tool_error")),
 		)
+	})
+
+	t.Run("store failure", func(t *testing.T) {
+		t.Parallel()
+
+		app := demotest.Start(t, demotest.ReplaceStore(demotest.FailingStore{}))
+
+		// The agent gets a tool error, and the call is traced and logged as one.
+		assert.True(t, call(t, app, "list_tasks", struct{}{}, nil).IsError)
+
+		spantest.HasSpan(t, app.Spans,
+			spantest.WithName("tools/call list_tasks"),
+			spantest.WithAttributeValue(attribute.String("error.type", "tool_error")),
+		)
+		logtest.HasRecord(t, app.Logs, logtest.WithBody("mcp request"), logtest.WithLevel(slog.LevelError))
 	})
 }

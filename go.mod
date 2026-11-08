@@ -3,7 +3,7 @@ module github.com/go-oryn/demo
 go 1.26.0
 
 require (
-	github.com/go-oryn/oryn/core v0.0.0-20261108211842-f111785b18bf
+	github.com/go-oryn/oryn/core v0.0.0-20261108214530-755c756edb6e
 	github.com/go-oryn/oryn/grpcserver v0.0.0-20261108211842-f111785b18bf
 	github.com/go-oryn/oryn/httpserver v0.0.0-20261108211842-f111785b18bf
 	github.com/go-oryn/oryn/mcpserver v0.0.0-20261108211842-f111785b18bf

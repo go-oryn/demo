@@ -20,20 +20,20 @@ import (
 // TaskIDKey is the span attribute holding the task ID.
 const TaskIDKey = attribute.Key("task.id")
 
-// Service holds the tasks business rules. It is used by the HTTP, gRPC and MCP APIs alike.
+// Service holds the tasks business rules, on a [Store]. It is used by the HTTP, gRPC and MCP APIs alike.
 //
 // It is instrumented with the application telemetry: a span per operation (tasks.create...),
 // child of the API span and parent of the SQL query spans; the tasks.created and tasks.completed
 // counters; and a log per change, correlated with the trace.
 type Service struct {
-	repository *Repository
-	telemetry  otel.Telemetry
-	created    metric.Int64Counter
-	completed  metric.Int64Counter
+	store     Store
+	telemetry otel.Telemetry
+	created   metric.Int64Counter
+	completed metric.Int64Counter
 }
 
 // NewService returns a [Service]. Its dependencies are injected by fx.
-func NewService(repository *Repository, telemetry otel.Telemetry) (*Service, error) {
+func NewService(store Store, telemetry otel.Telemetry) (*Service, error) {
 	meter := telemetry.Meter()
 
 	created, err := meter.Int64Counter("tasks.created", metric.WithDescription("Number of created tasks"))
@@ -46,7 +46,7 @@ func NewService(repository *Repository, telemetry otel.Telemetry) (*Service, err
 		return nil, err
 	}
 
-	return &Service{repository: repository, telemetry: telemetry, created: created, completed: completed}, nil
+	return &Service{store: store, telemetry: telemetry, created: created, completed: completed}, nil
 }
 
 // List returns all the tasks, oldest first.
@@ -54,7 +54,7 @@ func (s *Service) List(ctx context.Context) ([]Task, error) {
 	ctx, span := s.start(ctx, "tasks.list")
 	defer span.End()
 
-	tasks, err := s.repository.List(ctx)
+	tasks, err := s.store.List(ctx)
 	if err != nil {
 		return nil, s.fail(span, err)
 	}
@@ -69,7 +69,7 @@ func (s *Service) Get(ctx context.Context, id string) (Task, error) {
 	ctx, span := s.start(ctx, "tasks.get", TaskIDKey.String(id))
 	defer span.End()
 
-	task, err := s.repository.Get(ctx, id)
+	task, err := s.store.Get(ctx, id)
 	if err != nil {
 		return task, s.fail(span, err)
 	}
@@ -89,7 +89,7 @@ func (s *Service) Create(ctx context.Context, title string) (Task, error) {
 
 	span.SetAttributes(TaskIDKey.String(task.ID))
 
-	if err := s.repository.Insert(ctx, task); err != nil {
+	if err := s.store.Insert(ctx, task); err != nil {
 		return Task{}, s.fail(span, err)
 	}
 
@@ -104,11 +104,11 @@ func (s *Service) Complete(ctx context.Context, id string) (Task, error) {
 	ctx, span := s.start(ctx, "tasks.complete", TaskIDKey.String(id))
 	defer span.End()
 
-	if err := s.repository.Complete(ctx, id); err != nil {
+	if err := s.store.Complete(ctx, id); err != nil {
 		return Task{}, s.fail(span, err)
 	}
 
-	task, err := s.repository.Get(ctx, id)
+	task, err := s.store.Get(ctx, id)
 	if err != nil {
 		return Task{}, s.fail(span, err)
 	}
@@ -124,7 +124,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	ctx, span := s.start(ctx, "tasks.delete", TaskIDKey.String(id))
 	defer span.End()
 
-	if err := s.repository.Delete(ctx, id); err != nil {
+	if err := s.store.Delete(ctx, id); err != nil {
 		return s.fail(span, err)
 	}
 

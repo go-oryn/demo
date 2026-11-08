@@ -10,11 +10,11 @@ import (
 	"github.com/go-oryn/oryn/sql"
 
 	"github.com/go-oryn/demo/configs"
-	"github.com/go-oryn/demo/grpcapi"
-	"github.com/go-oryn/demo/httpapi"
-	"github.com/go-oryn/demo/mcpapi"
+	grpcapi "github.com/go-oryn/demo/internal/grpc"
+	httpapi "github.com/go-oryn/demo/internal/http"
+	mcpapi "github.com/go-oryn/demo/internal/mcp"
+	"github.com/go-oryn/demo/internal/tasks"
 	"github.com/go-oryn/demo/migrations"
-	"github.com/go-oryn/demo/tasks"
 )
 
 // App is the demo application: the modules it uses, and its own code. The commands of cmd/

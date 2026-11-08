@@ -6,7 +6,17 @@ import (
 	"errors"
 )
 
-// Repository stores the tasks in the database. Its queries are traced by the sql module.
+// Store stores the tasks. The [Repository] implements it on the database; tests can replace it
+// with fx.Replace, to test the service and the APIs without database, or with failures.
+type Store interface {
+	List(ctx context.Context) ([]Task, error)
+	Get(ctx context.Context, id string) (Task, error)
+	Insert(ctx context.Context, task Task) error
+	Complete(ctx context.Context, id string) error
+	Delete(ctx context.Context, id string) error
+}
+
+// Repository is the [Store] on the database. Its queries are traced by the sql module.
 // The placeholders ($1...) work with both PostgreSQL and SQLite.
 type Repository struct {
 	db *sql.DB

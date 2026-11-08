@@ -2,16 +2,19 @@ package httpapi_test
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
 
+	"github.com/go-oryn/oryn/core/otel/oteltest/logtest"
 	"github.com/go-oryn/oryn/core/otel/oteltest/spantest"
 
-	"github.com/go-oryn/demo/demotest"
-	"github.com/go-oryn/demo/tasks"
+	"github.com/go-oryn/demo/internal/demotest"
+	"github.com/go-oryn/demo/internal/tasks"
 )
 
 func TestHandlers(t *testing.T) {
@@ -81,5 +84,18 @@ func TestHandlers(t *testing.T) {
 		response := demotest.Start(t).HTTP(http.MethodGet, "/api/tasks", "")
 		require.Equal(t, http.StatusOK, response.Code)
 		assert.JSONEq(t, `[]`, response.Body.String())
+	})
+
+	t.Run("store failure", func(t *testing.T) {
+		t.Parallel()
+
+		app := demotest.Start(t, demotest.ReplaceStore(demotest.FailingStore{}))
+
+		response := app.HTTP(http.MethodGet, "/api/tasks", "")
+		assert.Equal(t, http.StatusInternalServerError, response.Code)
+		assert.JSONEq(t, `{"error": "internal error"}`, response.Body.String(), "the error is not exposed")
+
+		spantest.HasSpan(t, app.Spans, spantest.WithName("GET /api/tasks"), spantest.WithStatus(codes.Error))
+		logtest.HasRecord(t, app.Logs, logtest.WithBody("tasks request failed"), logtest.WithLevel(slog.LevelError))
 	})
 }

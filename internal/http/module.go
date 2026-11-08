@@ -1,4 +1,5 @@
-// Package httpapi is the HTTP API of the tasks: JSON handlers on the [tasks.Service].
+// Package httpapi (internal/http) is the HTTP API of the tasks: JSON handlers on the [tasks.Service].
+// It is not named http, so it does not collide with net/http.
 package httpapi
 
 import (

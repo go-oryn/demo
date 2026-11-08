@@ -1,4 +1,5 @@
-// Package mcpapi exposes the tasks to AI agents: MCP tools on the [tasks.Service].
+// Package mcpapi (internal/mcp) exposes the tasks to AI agents: MCP tools on the [tasks.Service].
+// It is not named mcp, so it does not collide with the MCP SDK package.
 package mcpapi
 
 import (
@@ -9,7 +10,7 @@ import (
 
 	"github.com/go-oryn/oryn/mcpserver"
 
-	"github.com/go-oryn/demo/tasks"
+	"github.com/go-oryn/demo/internal/tasks"
 )
 
 // Module registers the tools on the MCP server.

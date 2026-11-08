@@ -1,16 +1,19 @@
 package grpcapi_test
 
 import (
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/go-oryn/oryn/core/otel/oteltest/logtest"
 	"github.com/go-oryn/oryn/core/otel/oteltest/spantest"
 
-	"github.com/go-oryn/demo/demotest"
+	"github.com/go-oryn/demo/internal/demotest"
 	tasksv1 "github.com/go-oryn/demo/proto/tasks/v1"
 )
 
@@ -62,5 +65,17 @@ func TestTasksService(t *testing.T) {
 
 		_, err = app.GRPC.DeleteTask(ctx, &tasksv1.DeleteTaskRequest{Id: "missing"})
 		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("store failure", func(t *testing.T) {
+		t.Parallel()
+
+		app := demotest.Start(t, demotest.ReplaceStore(demotest.FailingStore{}))
+
+		_, err := app.GRPC.ListTasks(t.Context(), &tasksv1.ListTasksRequest{})
+		assert.Equal(t, codes.Internal, status.Code(err))
+
+		spantest.HasSpan(t, app.Spans, spantest.WithName("tasks.v1.TasksService/ListTasks"), spantest.WithStatus(otelcodes.Error))
+		logtest.HasRecord(t, app.Logs, logtest.WithBody("grpc request"), logtest.WithLevel(slog.LevelError))
 	})
 }
