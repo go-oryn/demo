@@ -1,0 +1,16 @@
+# APP_ENV=compose: the PostgreSQL database and the grafana/otel-lgtm stack of compose.yaml.
+otel:
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: otlp
+    interval: 10s
+  logs:
+    exporter: otlp
+  exporter:
+    otlp:
+      endpoint: http://localhost:4318
+
+sql:
+  driver: postgres
+  dsn: postgres://demo:${POSTGRES_PASSWORD:demo}@localhost:5432/demo?sslmode=disable

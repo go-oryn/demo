@@ -1,0 +1,22 @@
+# Local stack for APP_ENV=compose: PostgreSQL, and the grafana/otel-lgtm all-in-one
+# observability stack (OpenTelemetry collector, Tempo, Prometheus, Loki and Grafana).
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-demo}
+      POSTGRES_DB: demo
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "demo"]
+      interval: 2s
+      retries: 15
+
+  lgtm:
+    image: grafana/otel-lgtm:0.37.0
+    ports:
+      - "3000:3000" # Grafana
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP

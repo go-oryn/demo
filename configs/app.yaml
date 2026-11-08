@@ -1,0 +1,31 @@
+# Default configuration: a SQLite database file, readable logs on the console, no telemetry export.
+# See https://go-oryn.github.io/oryn/core/configuration/
+app:
+  name: oryn-demo
+  version: 0.1.0
+
+log:
+  level: info
+  console:
+    enabled: true
+    format: text
+
+# The standard OTEL_* environment variables override these, e.g. OTEL_TRACES_EXPORTER=otlp.
+otel:
+  traces:
+    exporter: none
+  metrics:
+    exporter: none
+  logs:
+    exporter: none
+
+httpserver:
+  address: ":8080"
+
+health:
+  server:
+    address: ":8081"
+
+sql:
+  driver: sqlite
+  dsn: demo.db

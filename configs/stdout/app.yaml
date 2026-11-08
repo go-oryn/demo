@@ -1,0 +1,14 @@
+# APP_ENV=stdout: print the traces, metrics and logs on stdout, as JSON.
+log:
+  console:
+    enabled: false
+
+otel:
+  traces:
+    exporter: console
+  metrics:
+    exporter: console
+    interval: 15s
+    runtime: false
+  logs:
+    exporter: console
