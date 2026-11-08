@@ -1,5 +1,8 @@
 # oryn demo
 
+[![CI](https://github.com/go-oryn/demo/actions/workflows/ci.yml/badge.svg)](https://github.com/go-oryn/demo/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/go-oryn/demo/graph/badge.svg)](https://codecov.io/gh/go-oryn/demo)
+
 A complete [oryn](https://github.com/go-oryn/oryn) application: one `tasks` module, served over an HTTP API, a gRPC API and MCP tools for AI agents, in one process, with its traces, metrics and logs.
 
 Documentation: https://go-oryn.github.io/oryn/demo/overview/

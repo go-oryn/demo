@@ -1,0 +1,19 @@
+# Codecov configuration: https://docs.codecov.com/docs/codecovyml-reference
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+# Go coverage profiles use import paths: map them to the repository files.
+fixes:
+  - "github.com/go-oryn/demo/::"
+
+ignore:
+  - "**/*_test.go"
+  - "internal/demotest/"
+
+comment: false
