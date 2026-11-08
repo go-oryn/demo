@@ -22,6 +22,15 @@ otel:
 httpserver:
   address: ":8080"
 
+grpcserver:
+  address: ":50051"
+  # Lets grpcurl and other tools discover the services.
+  reflection:
+    enabled: true
+
+mcpserver:
+  address: ":8082"
+
 health:
   server:
     address: ":8081"

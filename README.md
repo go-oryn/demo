@@ -1,45 +1,49 @@
 # oryn demo
 
-A small but complete [oryn](https://github.com/go-oryn/oryn) application: a tasks API on a database, with migrations, health checks, and traces, metrics and logs.
+A complete [oryn](https://github.com/go-oryn/oryn) application: one `tasks` module, served over an HTTP API, a gRPC API and MCP tools for AI agents, in one process, with its traces, metrics and logs.
 
-See the [demo documentation](https://go-oryn.github.io/oryn/demo/) for a guided tour.
+Documentation: https://go-oryn.github.io/oryn/demo/overview/
 
 ## Run
 
 ```shell
-go run .
+go run ./cmd/migrate   # apply the migrations (SQLite demo.db)
+go run ./cmd/serve     # HTTP :8080, gRPC :50051, MCP :8082, health :8081
 ```
-
-It uses a SQLite database file (`demo.db`) and prints readable logs:
 
 ```shell
+# HTTP
 curl -X POST localhost:8080/api/tasks -d '{"title": "Try oryn"}'
 curl localhost:8080/api/tasks
-curl -X POST localhost:8080/api/tasks/<id>/complete
-curl -X DELETE localhost:8080/api/tasks/<id>
-curl 'localhost:8081/readyz?verbose'
+
+# gRPC (reflection is enabled)
+grpcurl -plaintext -d '{"title": "Try oryn"}' localhost:50051 tasks.v1.TasksService/CreateTask
+grpcurl -plaintext localhost:50051 tasks.v1.TasksService/ListTasks
+
+# MCP
+claude mcp add --transport http oryn-demo http://localhost:8082/mcp
 ```
-
-Every response has an `X-Trace-Id` header.
-
-## Telemetry
-
-| Command | Telemetry |
-|---|---|
-| `go run .` | Logs on the console |
-| `APP_ENV=stdout go run .` | Traces, metrics and logs printed on stdout |
-| `docker compose up -d` then `APP_ENV=compose go run .` | PostgreSQL, and OTLP to Grafana on [localhost:3000](http://localhost:3000) |
 
 ## Layout
 
 | Path | Content |
 |---|---|
-| `main.go` | Runs the application: migrations, health server (`:8081`), API server (`:8080`) |
-| `app.go` | Assembles the application from the oryn modules |
-| `configs/` | Configuration, per `APP_ENV` |
+| `app.go` | The application, shared by the commands and the tests |
+| `cmd/serve`, `cmd/migrate` | The commands |
+| `tasks/` | The domain module: `Service` (rules, spans, metrics, logs) and `Repository` (SQL) |
+| `httpapi/`, `grpcapi/`, `mcpapi/` | The three APIs on the `tasks.Service` |
+| `proto/` | The gRPC API definition and its generated code (`go generate ./proto`) |
 | `migrations/` | SQL migrations, embedded |
-| `tasks/` | Repository, handlers, middlewares, and their module |
-| `app_test.go` | Tests of the whole application, in memory |
+| `configs/` | Configuration, per `APP_ENV` |
+| `demotest/` | Starts the application in tests, with in-memory HTTP, gRPC and MCP clients |
+
+## Telemetry
+
+| Command | Telemetry |
+|---|---|
+| `go run ./cmd/serve` | Logs on the console |
+| `APP_ENV=stdout go run ./cmd/serve` | Traces, metrics and logs printed on stdout |
+| `docker compose up -d`, then `APP_ENV=compose go run ./cmd/migrate` and `APP_ENV=compose go run ./cmd/serve` | PostgreSQL, and OTLP to Grafana on [localhost:3000](http://localhost:3000) |
 
 ## Test
 

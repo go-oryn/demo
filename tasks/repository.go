@@ -2,36 +2,19 @@ package tasks
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"errors"
-	"fmt"
-	"time"
-
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
-
-	"github.com/go-oryn/oryn/core/otel"
 )
 
 // Repository stores the tasks in the database. Its queries are traced by the sql module.
 // The placeholders ($1...) work with both PostgreSQL and SQLite.
 type Repository struct {
-	db        *sql.DB
-	telemetry otel.Telemetry
-	created   metric.Int64Counter
+	db *sql.DB
 }
 
 // NewRepository returns a [Repository]. Its dependencies are injected by fx.
-func NewRepository(db *sql.DB, telemetry otel.Telemetry) (*Repository, error) {
-	created, err := telemetry.Meter().Int64Counter("tasks.created", metric.WithDescription("Number of created tasks"))
-	if err != nil {
-		return nil, err
-	}
-
-	return &Repository{db: db, telemetry: telemetry, created: created}, nil
+func NewRepository(db *sql.DB) *Repository {
+	return &Repository{db: db}
 }
 
 // List returns all the tasks, oldest first.
@@ -69,22 +52,12 @@ func (r *Repository) Get(ctx context.Context, id string) (Task, error) {
 	return task, err
 }
 
-// Create stores a new task.
-func (r *Repository) Create(ctx context.Context, title string) (Task, error) {
-	task := Task{ID: newID(), Title: title, CreatedAt: time.Now().UTC().Truncate(time.Millisecond)}
-
+// Insert stores a new task.
+func (r *Repository) Insert(ctx context.Context, task Task) error {
 	_, err := r.db.ExecContext(ctx, "INSERT INTO tasks (id, title, done, created_at) VALUES ($1, $2, $3, $4)",
 		task.ID, task.Title, task.Done, task.CreatedAt)
-	if err != nil {
-		return task, err
-	}
 
-	// Enrich the request span, count the task, and log it: the log is correlated with the span.
-	trace.SpanFromContext(ctx).SetAttributes(attribute.String("task.id", task.ID))
-	r.created.Add(ctx, 1)
-	r.telemetry.Logger().InfoContext(ctx, "task created", "task_id", task.ID)
-
-	return task, nil
+	return err
 }
 
 // Complete marks a task as done, or returns [ErrNotFound].
@@ -114,14 +87,4 @@ func (r *Repository) exec(ctx context.Context, query string, id string) error {
 	}
 
 	return nil
-}
-
-// newID returns a random task ID.
-func newID() string {
-	b := make([]byte, 8)
-	if _, err := rand.Read(b); err != nil {
-		panic(fmt.Sprintf("cannot generate a task id: %v", err))
-	}
-
-	return hex.EncodeToString(b)
 }

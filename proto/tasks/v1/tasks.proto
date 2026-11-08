@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package tasks.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/go-oryn/demo/proto/tasks/v1;tasksv1";
+
+// TasksService manages the tasks: the same operations as the HTTP API and the MCP tools.
+service TasksService {
+  // ListTasks returns all the tasks, oldest first.
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+  // GetTask returns a task, or NOT_FOUND.
+  rpc GetTask(GetTaskRequest) returns (Task);
+  // CreateTask creates a task.
+  rpc CreateTask(CreateTaskRequest) returns (Task);
+  // CompleteTask marks a task as done and returns it, or returns NOT_FOUND.
+  rpc CompleteTask(CompleteTaskRequest) returns (Task);
+  // DeleteTask deletes a task, or returns NOT_FOUND.
+  rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);
+}
+
+// Task is a thing to do.
+message Task {
+  string id = 1;
+  string title = 2;
+  bool done = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message ListTasksRequest {}
+
+message ListTasksResponse {
+  repeated Task tasks = 1;
+}
+
+message GetTaskRequest {
+  string id = 1;
+}
+
+message CreateTaskRequest {
+  string title = 1;
+}
+
+message CompleteTaskRequest {
+  string id = 1;
+}
+
+message DeleteTaskRequest {
+  string id = 1;
+}
+
+message DeleteTaskResponse {}

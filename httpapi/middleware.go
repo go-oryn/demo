@@ -1,4 +1,4 @@
-package tasks
+package httpapi
 
 import (
 	"net/http"
